@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Dijital Graffiti</title>
+    <style>
+        body {
+            margin: 0;
+            background: #000;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            cursor: crosshair; /* Sprey imleci hissi */
+        }
+        canvas {
+            display: block;
+            border: 2px solid #333;
+            background: #1a1a1a; /* Grafitinin yapılacağı duvar */
+        }
+        .instructions {
+            position: absolute;
+            top: 20px;
+            color: rgba(255, 255, 255, 0.4);
+            font-family: 'Segoe UI', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            pointer-events: none;
+        }
+        .controls {
+            position: absolute;
+            bottom: 20px;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 10px 20px;
+            border-radius: 20px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .color-box {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: border-color 0.2s;
+        }
+        .color-box.selected {
+            border-color: #00f2ff; /* Seçili rengi vurgula */
+            box-shadow: 0 0 10px #00f2ff;
+        }
+        button {
+            background: #ffeb3b;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 15px;
+            cursor: pointer;
+            font-family: 'Segoe UI', sans-serif;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="instructions">Sprey Boya Yapmak İçin Fareyi Tıkla ve Sürükle</div>
+    <canvas id="graffitiCanvas"></canvas>
+
+    <div class="controls">
+        <div class="color-box" style="background-color: red;" data-color="red"></div>
+        <div class="color-box" style="background-color: blue;" data-color="blue"></div>
+        <div class="color-box" style="background-color: green;" data-color="green"></div>
+        <div class="color-box" style="background-color: yellow;" data-color="yellow"></div>
+        <div class="color-box" style="background-color: white;" data-color="white"></div>
+        <div class="color-box" style="background-color: hotpink;" data-color="hotpink"></div>
+        <button onclick="clearCanvas()">TEMİZLE</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('graffitiCanvas');
+        const ctx = canvas.getContext('2d');
+        const controls = document.querySelector('.controls');
+
+        canvas.width = window.innerWidth * 0.8; // Ekranın %80'i genişliğinde duvar
+        canvas.height = window.innerHeight * 0.8; // Ekranın %80'i yüksekliğinde duvar
+
+        let isDrawing = false;
+        let currentColor = 'red'; // Varsayılan renk
+        let hue = 0; // Gökkuşağı efekti için
+
+        // Başlangıçta ilk rengi seçili yap
+        document.querySelector('.color-box[data-color="red"]').classList.add('selected');
+
+        canvas.addEventListener('mousedown', (e) => {
+            isDrawing = true;
+            drawSpray(e);
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            if (!isDrawing) return;
+            drawSpray(e);
+        });
+
+        canvas.addEventListener('mouseup', () => {
+            isDrawing = false;
+            ctx.beginPath(); // Yeni çizime başla (eski yolu kapat)
+        });
+
+        canvas.addEventListener('mouseleave', () => {
+            isDrawing = false;
+            ctx.beginPath();
+        });
+
+        // Mobil desteği
+        canvas.addEventListener('touchstart', (e) => {
+            isDrawing = true;
+            e.preventDefault();
+            drawSpray(e.touches[0]);
+        });
+        canvas.addEventListener('touchmove', (e) => {
+            if (!isDrawing) return;
+            e.preventDefault();
+            drawSpray(e.touches[0]);
+        });
+        canvas.addEventListener('touchend', () => {
+            isDrawing = false;
+            ctx.beginPath();
+        });
+
+
+        function drawSpray(e) {
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+
+            // Rastgele dağılmış küçük noktalar çiz
+            for (let i = 0; i < 20; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const radius = Math.random() * 20; // Püskürtme yarıçapı
+                const x = e.clientX - canvas.offsetLeft + Math.cos(angle) * radius;
+                const y = e.clientY - canvas.offsetTop + Math.sin(angle) * radius;
+
+                const size = Math.random() * 2 + 1; // Noktaların büyüklüğü
+                
+                ctx.fillStyle = currentColor;
+                ctx.beginPath();
+                ctx.arc(x, y, size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        controls.addEventListener('click', (e) => {
+            if (e.target.classList.contains('color-box')) {
+                // Tüm seçili sınıfları kaldır
+                document.querySelectorAll('.color-box').forEach(box => box.classList.remove('selected'));
+                // Yeni rengi seçili yap
+                e.target.classList.add('selected');
+                currentColor = e.target.dataset.color;
+            }
+        });
+
+        function clearCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#1a1a1a'; // Duvar rengini tekrar boya
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        // Duvar arka planını başlatırken çiz
+        clearCanvas();
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth * 0.8;
+            canvas.height = window.innerHeight * 0.8;
+            clearCanvas(); // Temizle ve tekrar duvarı çiz
+        });
+    </script>
+</body>
+</html>

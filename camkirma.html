@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Ekran Parçalayıcı</title>
+    <style>
+        body {
+            margin: 0;
+            background: #111;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            cursor: crosshair;
+        }
+
+        canvas {
+            display: block;
+        }
+
+        .ui-hint {
+            position: absolute;
+            top: 20px;
+            color: rgba(255, 255, 255, 0.4);
+            font-family: 'Segoe UI', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            pointer-events: none;
+            text-align: center;
+        }
+
+        /* Ekran sarsılma efekti */
+        .shake {
+            animation: shake 0.2s cubic-bezier(.36,.07,.19,.97) both;
+        }
+
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-2px, 0, 0); }
+            20%, 80% { transform: translate3d(4px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-6px, 0, 0); }
+            40%, 60% { transform: translate3d(6px, 0, 0); }
+        }
+    </style>
+</head>
+<body id="body">
+
+    <div class="ui-hint">Ekrana Vur ve Parçala!</div>
+    <canvas id="canvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const body = document.getElementById('body');
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        let shards = [];
+
+        class Shard {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                // Rastgele üçgenmsi cam kırığı şekli
+                this.size = Math.random() * 40 + 10;
+                this.angle = Math.random() * Math.PI * 2;
+                this.speed = Math.random() * 10 + 5;
+                this.vx = Math.cos(this.angle) * this.speed;
+                this.vy = Math.sin(this.angle) * this.speed;
+                this.rotation = Math.random() * 0.2 - 0.1;
+                this.life = 1; // Şeffaflık (Opacity)
+                
+                // Cam rengi (hafif mavi/beyaz tonları)
+                this.color = `rgba(200, 230, 255, ${this.life})`;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.vy += 0.2; // Yerçekimi etkisi
+                this.life -= 0.01; // Yavaşça kaybolma
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(this.size, this.size / 2);
+                ctx.lineTo(this.size / 2, this.size);
+                ctx.closePath();
+                ctx.fillStyle = `rgba(200, 230, 255, ${this.life})`;
+                ctx.fill();
+                ctx.strokeStyle = `rgba(255, 255, 255, ${this.life})`;
+                ctx.stroke();
+                ctx.restore();
+            }
+        }
+
+        function createShatter(x, y) {
+            // Her tıklamada 20 cam parçası oluştur
+            for (let i = 0; i < 20; i++) {
+                shards.push(new Shard(x, y));
+            }
+
+            // Ekran sarsma
+            body.classList.add('shake');
+            setTimeout(() => body.classList.remove('shake'), 200);
+        }
+
+        window.addEventListener('mousedown', (e) => {
+            createShatter(e.clientX, e.clientY);
+        });
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Cam kırıklarını işle
+            for (let i = 0; i < shards.length; i++) {
+                shards[i].update();
+                shards[i].draw();
+                
+                if (shards[i].life <= 0) {
+                    shards.splice(i, 1);
+                    i--;
+                }
+            }
+            
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+</html>
