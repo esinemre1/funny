@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dijital Mantar Pano</title>
+    <link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Shadows+Into+Light&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #8d6e63; /* Mantar pano rengi */
+            background-image: url('https://www.transparenttextures.com/patterns/cork-board.png'); /* Mantar dokusu */
+            font-family: 'Shadows Into Light', cursive;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .header {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            backdrop-filter: blur(5px);
+            position: relative;
+            z-index: 100;
+        }
+
+        .header h1 {
+            margin: 0;
+            color: #fff;
+            font-family: 'Permanent Marker', cursive;
+            font-size: 1.5rem;
+            letter-spacing: 2px;
+        }
+
+        .add-btn {
+            background: #ffeb3b;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-family: 'Permanent Marker', cursive;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            transition: transform 0.2s;
+        }
+
+        .add-btn:hover { transform: scale(1.1); }
+
+        .note {
+            width: 200px;
+            height: 200px;
+            padding: 15px;
+            position: absolute;
+            cursor: move;
+            box-shadow: 5px 5px 15px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.1s;
+        }
+
+        .note textarea {
+            background: transparent;
+            border: none;
+            resize: none;
+            flex-grow: 1;
+            font-family: 'Shadows Into Light', cursive;
+            font-size: 1.3rem;
+            outline: none;
+            color: #333;
+        }
+
+        .note .close-btn {
+            position: absolute;
+            top: 5px;
+            right: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            color: rgba(0,0,0,0.3);
+        }
+
+        .note .close-btn:hover { color: #000; }
+
+        /* Renk varyasyonları */
+        .color1 { background-color: #fff176; }
+        .color2 { background-color: #ff8a65; }
+        .color3 { background-color: #81c784; }
+        .color4 { background-color: #4fc3f7; }
+        .color5 { background-color: #ba68c8; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>MANTAR PANO</h1>
+        <button class="add-btn" onclick="addNote()">+ NOT EKLE</button>
+    </div>
+
+    <div id="board" style="width: 100%; height: 100vh; position: relative;"></div>
+
+    <script>
+        const board = document.getElementById('board');
+        let notes = JSON.parse(localStorage.getItem('my_notes')) || [];
+
+        function init() {
+            notes.forEach(note => createNoteElement(note));
+        }
+
+        function addNote() {
+            const noteData = {
+                id: Date.now(),
+                text: "",
+                x: Math.random() * (window.innerWidth - 250),
+                y: Math.random() * (window.innerHeight - 300) + 60,
+                color: 'color' + (Math.floor(Math.random() * 5) + 1)
+            };
+            notes.push(noteData);
+            createNoteElement(noteData);
+            save();
+        }
+
+        function createNoteElement(note) {
+            const div = document.createElement('div');
+            div.className = `note ${note.color}`;
+            div.style.left = note.x + 'px';
+            div.style.top = note.y + 'px';
+            div.innerHTML = `
+                <span class="close-btn" onclick="deleteNote(${note.id}, this)">X</span>
+                <textarea oninput="updateNoteText(${note.id}, this.value)">${note.text}</textarea>
+            `;
+
+            // Sürükle bırak mantığı
+            let isDragging = false;
+            div.onmousedown = (e) => {
+                if(e.target.tagName === 'TEXTAREA') return;
+                isDragging = true;
+                let shiftX = e.clientX - div.getBoundingClientRect().left;
+                let shiftY = e.clientY - div.getBoundingClientRect().top;
+
+                document.onmousemove = (e) => {
+                    if(!isDragging) return;
+                    let newX = e.clientX - shiftX;
+                    let newY = e.clientY - shiftY;
+                    div.style.left = newX + 'px';
+                    div.style.top = newY + 'px';
+                    note.x = newX;
+                    note.y = newY;
+                };
+
+                document.onmouseup = () => {
+                    isDragging = false;
+                    save();
+                    document.onmousemove = null;
+                };
+            };
+
+            board.appendChild(div);
+        }
+
+        function updateNoteText(id, text) {
+            const note = notes.find(n => n.id === id);
+            if(note) note.text = text;
+            save();
+        }
+
+        function deleteNote(id, btn) {
+            notes = notes.filter(n => n.id !== id);
+            btn.parentElement.remove();
+            save();
+        }
+
+        function save() {
+            localStorage.setItem('my_notes', JSON.stringify(notes));
+        }
+
+        init();
+    </script>
+</body>
+</html>

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Focus Buddy | Pomodoro</title>
+    <style>
+        body { background: #0f172a; color: white; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .timer-card { text-align: center; background: #1e293b; padding: 40px; border-radius: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 2px solid #334155; }
+        #time { font-size: 5rem; font-weight: bold; font-family: monospace; margin: 20px 0; color: #fb7185; }
+        .btns button { padding: 10px 25px; margin: 5px; cursor: pointer; border: none; border-radius: 10px; font-weight: bold; transition: 0.3s; }
+        .start { background: #10b981; color: white; }
+        .reset { background: #64748b; color: white; }
+        .status { text-transform: uppercase; letter-spacing: 2px; color: #94a3b8; font-size: 0.8rem; }
+    </style>
+</head>
+<body>
+    <div class="timer-card">
+        <div class="status" id="status">Çalışma Zamanı</div>
+        <div id="time">25:00</div>
+        <div class="btns">
+            <button class="start" onclick="toggleTimer()" id="mainBtn">BAŞLAT</button>
+            <button class="reset" onclick="resetTimer()">SIFIRLA</button>
+        </div>
+    </div>
+
+    <script>
+        let timeLeft = 1500; // 25 dakika
+        let timerId = null;
+        let isWorking = true;
+
+        function updateDisplay() {
+            const mins = Math.floor(timeLeft / 60);
+            const secs = timeLeft % 60;
+            document.getElementById('time').innerText = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function toggleTimer() {
+            if (timerId) {
+                clearInterval(timerId);
+                timerId = null;
+                document.getElementById('mainBtn').innerText = "DEVAM ET";
+            } else {
+                document.getElementById('mainBtn').innerText = "DURAKLAT";
+                timerId = setInterval(() => {
+                    timeLeft--;
+                    updateDisplay();
+                    if (timeLeft === 0) {
+                        clearInterval(timerId);
+                        alert(isWorking ? "Mola zamanı!" : "Çalışma zamanı!");
+                        isWorking = !isWorking;
+                        timeLeft = isWorking ? 1500 : 300;
+                        document.getElementById('status').innerText = isWorking ? "Çalışma Zamanı" : "Mola Zamanı";
+                        updateDisplay();
+                    }
+                }, 1000);
+            }
+        }
+
+        function resetTimer() {
+            clearInterval(timerId);
+            timerId = null;
+            timeLeft = 1500;
+            isWorking = true;
+            document.getElementById('status').innerText = "Çalışma Zamanı";
+            document.getElementById('mainBtn').innerText = "BAŞLAT";
+            updateDisplay();
+        }
+    </script>
+</body>
+</html>

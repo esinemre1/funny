@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dijital Kum Sanatı</title>
+    <style>
+        body {
+            margin: 0;
+            background-color: #000;
+            color: #fff;
+            font-family: 'Segoe UI', sans-serif;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        canvas {
+            border: 2px solid #333;
+            background-color: #050505;
+            cursor: crosshair;
+            image-rendering: pixelated; /* Kum tanelerinin net görünmesi için */
+        }
+
+        .controls {
+            position: absolute;
+            bottom: 20px;
+            background: rgba(20, 20, 20, 0.8);
+            padding: 15px 25px;
+            border-radius: 50px;
+            display: flex;
+            gap: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid #444;
+        }
+
+        .hint {
+            position: absolute;
+            top: 20px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="hint">Ekrana dokun ve kumları akıt</div>
+    <canvas id="sandCanvas"></canvas>
+
+    <div class="controls">
+        <div style="font-size: 0.8rem; color: #aaa;">Renk Modu: <strong id="colorName" style="color: #00f2ff;">Gökkuşağı</strong></div>
+        <button onclick="clearCanvas()" style="background: none; border: 1px solid #ff4757; color: #ff4757; border-radius: 5px; cursor: pointer;">Temizle</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('sandCanvas');
+        const ctx = canvas.getContext('2d');
+        const width = 200; // Simülasyon çözünürlüğü (Düşük tutmak performansı artırır)
+        const height = 200;
+        
+        canvas.width = 600;
+        canvas.height = 600;
+
+        let grid = createGrid(width, height);
+        let hueValue = 200;
+        let isMouseDown = false;
+
+        function createGrid(cols, rows) {
+            let arr = new Array(cols);
+            for (let i = 0; i < arr.length; i++) {
+                arr[i] = new Array(rows).fill(0);
+            }
+            return arr;
+        }
+
+        function draw() {
+            // Arka planı temizle
+            ctx.fillStyle = '#050505';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            let w = canvas.width / width;
+            let h = canvas.height / height;
+
+            for (let i = 0; i < width; i++) {
+                for (let j = 0; j < height; j++) {
+                    if (grid[i][j] > 0) {
+                        ctx.fillStyle = `hsl(${grid[i][j]}, 100%, 50%)`;
+                        ctx.fillRect(i * w, j * h, w, h);
+                    }
+                }
+            }
+
+            // Fizik Hesaplama (Hücresel Otomat)
+            let nextGrid = createGrid(width, height);
+            for (let i = 0; i < width; i++) {
+                for (let j = 0; j < height; j++) {
+                    let state = grid[i][j];
+                    if (state > 0) {
+                        if (j === height - 1) {
+                            nextGrid[i][j] = state;
+                        } else {
+                            let below = grid[i][j + 1];
+                            let dir = Math.random() < 0.5 ? 1 : -1;
+                            let belowA = i + dir >= 0 && i + dir < width ? grid[i + dir][j + 1] : -1;
+                            let belowB = i - dir >= 0 && i - dir < width ? grid[i - dir][j + 1] : -1;
+
+                            if (below === 0) {
+                                nextGrid[i][j + 1] = state;
+                            } else if (belowA === 0) {
+                                nextGrid[i + dir][j + 1] = state;
+                            } else if (belowB === 0) {
+                                nextGrid[i - dir][j + 1] = state;
+                            } else {
+                                nextGrid[i][j] = state;
+                            }
+                        }
+                    }
+                }
+            }
+            grid = nextGrid;
+
+            if (isMouseDown) {
+                // Kum ekleme
+                let rect = canvas.getBoundingClientRect();
+                // Mouse koordinatlarını simülasyon gridine çevir
+                let mouseX = Math.floor(((window.mouseX - rect.left) / canvas.width) * width);
+                let mouseY = Math.floor(((window.mouseY - rect.top) / canvas.height) * height);
+                
+                let matrix = 5;
+                for (let i = -matrix; i < matrix; i++) {
+                    for (let j = -matrix; j < matrix; j++) {
+                        if (Math.random() > 0.8) {
+                            let col = mouseX + i;
+                            let row = mouseY + j;
+                            if (col >= 0 && col < width && row >= 0 && row < height) {
+                                grid[col][row] = hueValue;
+                            }
+                        }
+                    }
+                }
+                hueValue += 1;
+                if (hueValue > 360) hueValue = 0;
+            }
+
+            requestAnimationFrame(draw);
+        }
+
+        window.addEventListener('mousedown', () => isMouseDown = true);
+        window.addEventListener('mouseup', () => isMouseDown = false);
+        window.addEventListener('mousemove', (e) => {
+            window.mouseX = e.clientX;
+            window.mouseY = e.clientY;
+        });
+
+        // Mobil desteği
+        canvas.addEventListener('touchstart', (e) => { isMouseDown = true; window.mouseX = e.touches[0].clientX; window.mouseY = e.touches[0].clientY; e.preventDefault(); });
+        canvas.addEventListener('touchend', () => isMouseDown = false);
+        canvas.addEventListener('touchmove', (e) => { window.mouseX = e.touches[0].clientX; window.mouseY = e.touches[0].clientY; });
+
+        function clearCanvas() {
+            grid = createGrid(width, height);
+        }
+
+        draw();
+    </script>
+</body>
+</html>

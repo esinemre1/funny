@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { background: #111; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; font-family: sans-serif; }
+        #escape-btn {
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            background: #ff4757;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            position: absolute;
+            transition: 0.1s ease;
+            box-shadow: 0 5px 15px rgba(255, 71, 87, 0.4);
+        }
+        h1 { color: #555; position: absolute; top: 20px; pointer-events: none; }
+    </style>
+</head>
+<body>
+    <h1>ÖDÜLÜ ALMAK İÇİN BUTONA TIKLA!</h1>
+    <button id="escape-btn">BURADAYIM!</button>
+
+    <script>
+        const btn = document.getElementById('escape-btn');
+        
+        btn.addEventListener('mouseover', () => {
+            // Ekran sınırları içinde rastgele bir konuma kaç
+            const x = Math.random() * (window.innerWidth - btn.clientWidth);
+            const y = Math.random() * (window.innerHeight - btn.clientHeight);
+            
+            btn.style.left = x + 'px';
+            btn.style.top = y + 'px';
+            
+            // Komik mesajlar değiştir
+            const messages = ["Iskaladın!", "Çok Yavaşsın!", "Yakalayamazsın ki!", "Hadi ama!", "Hahaha!"];
+            btn.innerText = messages[Math.floor(Math.random() * messages.length)];
+        });
+
+        btn.onclick = () => alert("NASIL BAŞARDIN?! Sen bir büyücüsün.");
+    </script>
+</body>
+</html>

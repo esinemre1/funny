@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parçacık Reaksiyonu</title>
+    <style>
+        body {
+            margin: 0;
+            background: #000;
+            overflow: hidden;
+            color: #fff;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        canvas {
+            display: block;
+        }
+
+        .ui {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            pointer-events: none;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-size: 0.7rem;
+            color: rgba(255, 255, 255, 0.3);
+        }
+
+        .controls {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px;
+            border-radius: 10px;
+            backdrop-filter: blur(5px);
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="ui">Parçacık Akışı: Etkileşime geçmek için fareyi hareket ettir</div>
+    <div class="controls">Mod: <strong id="modeText">ÇEKİM</strong> (Tıklayarak Değiştir)</div>
+    <canvas id="canvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const modeText = document.getElementById('modeText');
+
+        let particles = [];
+        const particleCount = 1500;
+        let mouse = { x: -100, y: -100, active: false };
+        let mode = 'attract'; // attract veya repel
+
+        window.addEventListener('resize', resize);
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resize();
+
+        class Particle {
+            constructor() {
+                this.init();
+            }
+
+            init() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.vx = (Math.random() - 0.5) * 2;
+                this.vy = (Math.random() - 0.5) * 2;
+                this.size = Math.random() * 2 + 1;
+                this.color = `hsl(${Math.random() * 60 + 180}, 100%, 70%)`; // Mavi-Turkuaz tonları
+            }
+
+            update() {
+                // Fare etkileşimi
+                const dx = mouse.x - this.x;
+                const dy = mouse.y - this.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                const force = (100 - distance) / 100;
+
+                if (distance < 200) {
+                    if (mode === 'attract') {
+                        this.vx += dx / 500;
+                        this.vy += dy / 500;
+                    } else {
+                        this.vx -= dx / 500;
+                        this.vy -= dy / 500;
+                    }
+                }
+
+                this.x += this.vx;
+                this.y += this.vy;
+
+                // Sürtünme
+                this.vx *= 0.98;
+                this.vy *= 0.98;
+
+                // Kenar kontrolü
+                if (this.x < 0) this.x = canvas.width;
+                if (this.x > canvas.width) this.x = 0;
+                if (this.y < 0) this.y = canvas.height;
+                if (this.y > canvas.height) this.y = 0;
+            }
+
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function createParticles() {
+            for (let i = 0; i < particleCount; i++) {
+                particles.push(new Particle());
+            }
+        }
+
+        function animate() {
+            // Hafif iz bırakma efekti için yarı saydam temizleme
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+
+            requestAnimationFrame(animate);
+        }
+
+        window.addEventListener('mousemove', e => {
+            mouse.x = e.clientX;
+            mouse.y = e.clientY;
+        });
+
+        window.addEventListener('mousedown', () => {
+            mode = mode === 'attract' ? 'repel' : 'attract';
+            modeText.innerText = mode === 'attract' ? 'ÇEKİM' : 'İTME';
+        });
+
+        createParticles();
+        animate();
+    </script>
+</body>
+</html>

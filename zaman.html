@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zaman Kontrol Merkezi</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #020617;
+            --card: #0f172a;
+            --yıl-color: #0ea5e9;
+            --ay-color: #8b5cf6;
+            --hafta-color: #f59e0b;
+            --gün-color: #ec4899;
+            --text-main: #f8fafc;
+            --text-dim: #94a3b8;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .main-container {
+            width: 95%;
+            max-width: 900px; /* Genişletilmiş panel */
+            background: var(--card);
+            padding: 3rem;
+            border-radius: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 50px 100px -20px rgba(0,0,0,0.7);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 3rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .header-title h1 {
+            font-size: 1.8rem;
+            font-weight: 900;
+            margin: 0;
+            background: linear-gradient(to right, #fff, #38bdf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        #live-clock {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 2rem;
+            color: var(--yıl-color);
+            text-shadow: 0 0 20px rgba(14, 165, 233, 0.3);
+        }
+
+        /* Zaman Blokları */
+        .time-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2.5rem;
+        }
+
+        .time-card {
+            position: relative;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 0.8rem;
+        }
+
+        .label-group h3 {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-dim);
+            margin: 0;
+        }
+
+        .percentage-large {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
+        /* Bar Tasarımı */
+        .progress-rail {
+            height: 12px;
+            background: #1e293b;
+            border-radius: 20px;
+            overflow: hidden;
+            margin-bottom: 1rem;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            border-radius: 20px;
+            transition: width 0.3s ease-out;
+        }
+
+        /* Detaylı Kalan Süre Tablosu */
+        .remaining-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 1rem;
+            background: rgba(0,0,0,0.2);
+            padding: 1rem;
+            border-radius: 15px;
+        }
+
+        .stat-box {
+            text-align: left;
+        }
+
+        .stat-val {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            font-weight: 700;
+        }
+
+        .stat-lbl {
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+        }
+
+        /* Renk Atamaları */
+        .yıl .progress-bar { background: var(--yıl-color); box-shadow: 0 0 20px rgba(14, 165, 233, 0.4); }
+        .yıl .percentage-large { color: var(--yıl-color); }
+        
+        .ay .progress-bar { background: var(--ay-color); box-shadow: 0 0 20px rgba(139, 92, 246, 0.4); }
+        .ay .percentage-large { color: var(--ay-color); }
+
+        .hafta .progress-bar { background: var(--hafta-color); box-shadow: 0 0 20px rgba(245, 158, 11, 0.4); }
+        .hafta .percentage-large { color: var(--hafta-color); }
+
+        .gün .progress-bar { background: var(--gün-color); box-shadow: 0 0 20px rgba(236, 72, 153, 0.4); }
+        .gün .percentage-large { color: var(--gün-color); }
+
+        footer {
+            margin-top: 3rem;
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.8rem;
+        }
+
+        @media (max-width: 600px) {
+            .remaining-stats { grid-template-columns: 1fr 1fr; }
+            .header { flex-direction: column; text-align: center; gap: 1rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="main-container">
+    <div class="header">
+        <div class="header-title">
+            <h1>ZAMAN KONTROL MERKEZİ</h1>
+            <p style="color: var(--text-dim); margin: 5px 0 0 0;" id="full-date">Yükleniyor...</p>
+        </div>
+        <div id="live-clock">00:00:00</div>
+    </div>
+
+    <div class="time-grid">
+        <div class="time-card yıl">
+            <div class="card-header">
+                <div class="label-group"><h3 id="year-label">2026 İLERLEMESİ</h3></div>
+                <div class="percentage-large" id="yıl-p">0.00%</div>
+            </div>
+            <div class="progress-rail"><div class="progress-bar" id="yıl-b"></div></div>
+            <div class="remaining-stats" id="yıl-stats"></div>
+        </div>
+
+        <div class="time-card ay">
+            <div class="card-header">
+                <div class="label-group"><h3 id="ay-label">AY İLERLEMESİ</h3></div>
+                <div class="percentage-large" id="ay-p">0.00%</div>
+            </div>
+            <div class="progress-rail"><div class="progress-bar" id="ay-b"></div></div>
+            <div class="remaining-stats" id="ay-stats"></div>
+        </div>
+
+        <div class="time-card gün">
+            <div class="card-header">
+                <div class="label-group"><h3>GÜNLÜK KOTA</h3></div>
+                <div class="percentage-large" id="gün-p">0.00%</div>
+            </div>
+            <div class="progress-rail"><div class="progress-bar" id="gün-b"></div></div>
+            <div class="remaining-stats" id="gün-stats"></div>
+        </div>
+    </div>
+
+    <footer>
+        &copy; 2026 Dijital Zaman Analizörü &bull; Veriler yerel tarayıcı saatinizden alınmaktadır.
+    </footer>
+</div>
+
+<script>
+    function updateDashboard() {
+        const now = new Date();
+        
+        // Üst Bilgi
+        document.getElementById('live-clock').innerText = now.toLocaleTimeString('tr-TR');
+        document.getElementById('full-date').innerText = now.toLocaleDateString('tr-TR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+        // --- YIL HESAPLARI ---
+        const startY = new Date(now.getFullYear(), 0, 1);
+        const endY = new Date(now.getFullYear() + 1, 0, 1);
+        processTime('yıl', now, startY, endY);
+
+        // --- AY HESAPLARI ---
+        const startM = new Date(now.getFullYear(), now.getMonth(), 1);
+        const endM = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+        const monthName = now.toLocaleString('tr-TR', { month: 'long' }).toUpperCase();
+        document.getElementById('ay-label').innerText = `${monthName} AYI İLERLEMESİ`;
+        processTime('ay', now, startM, endM);
+
+        // --- GÜN HESAPLARI ---
+        const startD = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const endD = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+        processTime('gün', now, startD, endD);
+    }
+
+    function processTime(id, now, start, end) {
+        const total = end - start;
+        const elapsed = now - start;
+        const remaining = end - now;
+        const percent = (elapsed / total) * 100;
+
+        // UI Güncelle
+        document.getElementById(`${id}-p`).innerText = percent.toFixed(percent > 99 ? 4 : 6) + "%";
+        document.getElementById(`${id}-b`).style.width = percent + "%";
+
+        // Kalan Detaylar
+        const secs = Math.floor(remaining / 1000);
+        const mins = Math.floor(secs / 60);
+        const hours = Math.floor(mins / 60);
+        const days = Math.floor(hours / 24);
+
+        let html = '';
+        if(days > 0) html += `<div class="stat-box"><span class="stat-val">${days}</span><span class="stat-lbl">GÜN</span></div>`;
+        html += `<div class="stat-box"><span class="stat-val">${hours % 24}</span><span class="stat-lbl">SAAT</span></div>`;
+        html += `<div class="stat-box"><span class="stat-val">${mins % 60}</span><span class="stat-lbl">DK</span></div>`;
+        html += `<div class="stat-box"><span class="stat-val">${secs % 60}</span><span class="stat-lbl">SN</span></div>`;
+        
+        document.getElementById(`${id}-stats`).innerHTML = html;
+    }
+
+    setInterval(updateDashboard, 1000);
+    updateDashboard();
+</script>
+
+</body>
+</html>

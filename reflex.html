@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reflex Master</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&display=swap');
+
+        body {
+            margin: 0;
+            background: #020617;
+            color: #fff;
+            font-family: 'Orbitron', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        #game-area {
+            position: relative;
+            width: 90vw;
+            max-width: 600px;
+            height: 400px;
+            background: #0f172a;
+            border: 2px solid #1e293b;
+            border-radius: 20px;
+            cursor: crosshair;
+            overflow: hidden;
+        }
+
+        .target {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background: radial-gradient(circle, #f43f5e 0%, #9f1239 100%);
+            border-radius: 50%;
+            border: 3px solid #fff;
+            box-shadow: 0 0 20px rgba(244, 63, 94, 0.5);
+            transition: transform 0.1s ease;
+        }
+
+        .target:active {
+            transform: scale(0.8);
+        }
+
+        .stats-bar {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+            color: #94a3b8;
+        }
+
+        .stat-val {
+            color: #38bdf8;
+            font-weight: bold;
+        }
+
+        #start-screen {
+            position: absolute;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.9);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            border-radius: 20px;
+        }
+
+        button {
+            background: #38bdf8;
+            color: #020617;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 10px;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            background: #7dd3fc;
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.4);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="stats-bar">
+        <div>PUAN: <span id="score" class="stat-val">0</span></div>
+        <div>SÜRE: <span id="timer" class="stat-val">30</span>s</div>
+        <div>TEPKİ: <span id="avg-time" class="stat-val">0</span>ms</div>
+    </div>
+
+    <div id="game-area">
+        <div id="start-screen">
+            <h2 style="color: #38bdf8;">REFLEX MASTER</h2>
+            <p style="font-size: 0.7rem; color: #64748b; margin-bottom: 20px;">30 saniyede kaç hedef vurabilirsin?</p>
+            <button onclick="startGame()">OYUNU BAŞLAT</button>
+        </div>
+    </div>
+
+    <script>
+        let score = 0;
+        let timeLeft = 30;
+        let gameActive = false;
+        let reactionTimes = [];
+        let lastTargetSpawn = 0;
+
+        const gameArea = document.getElementById('game-area');
+        const scoreEl = document.getElementById('score');
+        const timerEl = document.getElementById('timer');
+        const avgEl = document.getElementById('avg-time');
+        const startScreen = document.getElementById('start-screen');
+
+        function startGame() {
+            score = 0;
+            timeLeft = 30;
+            reactionTimes = [];
+            gameActive = true;
+            startScreen.style.display = 'none';
+            scoreEl.innerText = score;
+            avgEl.innerText = "0";
+            
+            spawnTarget();
+            const timerInterval = setInterval(() => {
+                timeLeft--;
+                timerEl.innerText = timeLeft;
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    endGame();
+                }
+            }, 1000);
+        }
+
+        function spawnTarget() {
+            if (!gameActive) return;
+
+            // Varsa eski hedefi sil
+            const oldTarget = document.querySelector('.target');
+            if (oldTarget) oldTarget.remove();
+
+            const target = document.createElement('div');
+            target.className = 'target';
+            
+            const maxX = gameArea.clientWidth - 50;
+            const maxY = gameArea.clientHeight - 50;
+            
+            target.style.left = Math.random() * maxX + 'px';
+            target.style.top = Math.random() * maxY + 'px';
+            
+            lastTargetSpawn = Date.now();
+            
+            target.onclick = () => {
+                const reaction = Date.now() - lastTargetSpawn;
+                reactionTimes.push(reaction);
+                score++;
+                scoreEl.innerText = score;
+                updateAvg();
+                target.remove();
+                spawnTarget();
+            };
+
+            gameArea.appendChild(target);
+        }
+
+        function updateAvg() {
+            const sum = reactionTimes.reduce((a, b) => a + b, 0);
+            const avg = (sum / reactionTimes.length).toFixed(0);
+            avgEl.innerText = avg;
+        }
+
+        function endGame() {
+            gameActive = false;
+            startScreen.style.display = 'flex';
+            const oldTarget = document.querySelector('.target');
+            if (oldTarget) oldTarget.remove();
+            
+            const finalAvg = avgEl.innerText;
+            startScreen.innerHTML = `
+                <h2 style="color: #f43f5e;">SÜRE DOLDU!</h2>
+                <p>Skor: ${score}</p>
+                <p style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 20px;">Ortalama Tepki: ${finalAvg}ms</p>
+                <button onclick="location.reload()">TEKRAR DENE</button>
+            `;
+        }
+    </script>
+</body>
+</html>

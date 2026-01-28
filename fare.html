@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Seni İzliyoruz...</title>
+    <style>
+        body {
+            margin: 0;
+            background: #0a0a0a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            font-family: 'Arial', sans-serif;
+        }
+
+        .container {
+            display: flex;
+            gap: 40px;
+        }
+
+        /* Gözün Dış Kısmı */
+        .eye {
+            width: 150px;
+            height: 150px;
+            background: #fff;
+            border-radius: 50%;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 10px 30px rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+        }
+
+        /* Göz Bebeği */
+        .iris {
+            width: 60px;
+            height: 60px;
+            background: radial-gradient(circle, #333 30%, #000 100%);
+            border-radius: 50%;
+            position: relative;
+            transition: width 0.1s, height 0.1s;
+        }
+
+        /* Işık Yansıması */
+        .iris::after {
+            content: '';
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            width: 15px;
+            height: 15px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+        }
+
+        .label {
+            position: absolute;
+            bottom: 50px;
+            color: #333;
+            letter-spacing: 5px;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="label">Farenin peşindeyiz...</div>
+
+    <div class="container">
+        <div class="eye">
+            <div class="iris" id="iris1"></div>
+        </div>
+        <div class="eye">
+            <div class="iris" id="iris2"></div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('mousemove', (e) => {
+            const irises = document.querySelectorAll('.iris');
+            
+            irises.forEach(iris => {
+                const rect = iris.getBoundingClientRect();
+                
+                // Göz bebeğinin merkezi
+                const x = rect.left + rect.width / 2;
+                const y = rect.top + rect.height / 2;
+                
+                // Fare ile merkez arasındaki açı (Radyan)
+                const radian = Math.atan2(e.pageX - x, e.pageY - y);
+                
+                // Dönüş açısını dereceye çevirip ters yöne odakla (rotate)
+                const rot = (radian * (180 / Math.PI) * -1) + 270;
+                
+                // Hareket mesafesi (Gözün dışına çıkmaması için sınırlı)
+                const distance = 25;
+                const moveX = Math.cos(radian) * distance; // Bu kısımdaki matematiksel mantığı düzelttim
+                
+                // Göz bebeğinin konumu
+                // Not: Basitlik için transform kullanarak döndürüp ileri itiyoruz
+                iris.style.transform = `rotate(${rot}deg) translate(25px)`;
+                
+                // Fare yaklaştıkça göz bebeğini büyütme efekti
+                const distToMouse = Math.hypot(e.pageX - x, e.pageY - y);
+                const size = Math.max(30, 80 - (distToMouse / 10));
+                iris.style.width = size + 'px';
+                iris.style.height = size + 'px';
+            });
+        });
+    </script>
+</body>
+</html>

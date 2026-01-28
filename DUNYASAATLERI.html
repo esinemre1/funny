@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dünya Saatleri Panosu</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500&family=Plus+Jakarta+Sans:wght@400;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #020617;
+            --card: #0f172a;
+            --accent: #38bdf8;
+            --day: #fbbf24;
+            --night: #818cf8;
+            --text: #f8fafc;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .dashboard {
+            width: 100%;
+            max-width: 1000px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(to right, #fff, var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        /* Saat Izgarası */
+        .clock-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 20px;
+        }
+
+        .clock-card {
+            background: var(--card);
+            border: 1px solid rgba(255,255,255,0.05);
+            padding: 25px;
+            border-radius: 24px;
+            text-align: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .clock-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border-color: var(--accent);
+        }
+
+        .city-name {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        .country-name {
+            font-size: 0.75rem;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .time-display {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 2.2rem;
+            font-weight: 500;
+            color: var(--text);
+            margin: 10px 0;
+        }
+
+        .date-display {
+            font-size: 0.8rem;
+            color: #94a3b8;
+        }
+
+        /* Gece/Gündüz İkonu */
+        .status-icon {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 1.2rem;
+        }
+
+        .day-mode { color: var(--day); }
+        .night-mode { color: var(--night); }
+
+        footer {
+            margin-top: 50px;
+            text-align: center;
+            color: #475569;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+
+<div class="dashboard">
+    <div class="header">
+        <h1>DÜNYA SAATLERİ</h1>
+        <p style="color: #64748b;">Küresel zaman akışını anlık takip edin</p>
+    </div>
+
+    <div class="clock-grid" id="clock-container">
+        </div>
+
+    <footer>
+        &copy; 2026 Zaman Portalı &bull; Tüm saatler cihazınızın senkronizasyonuna göredir.
+    </footer>
+</div>
+
+<script>
+    // Şehirler ve Zaman Dilimleri
+    const cities = [
+        { name: "İstanbul", country: "Türkiye", zone: "Europe/Istanbul" },
+        { name: "Londra", country: "İngiltere", zone: "Europe/London" },
+        { name: "New York", country: "ABD", zone: "America/New_York" },
+        { name: "Tokyo", country: "Japonya", zone: "Asia/Tokyo" },
+        { name: "Paris", country: "Fransa", zone: "Europe/Paris" },
+        { name: "Sidney", country: "Avustralya", zone: "Australia/Sydney" },
+        { name: "Dubai", country: "BAE", zone: "Asia/Dubai" },
+        { name: "Berlin", country: "Almanya", zone: "Europe/Berlin" },
+        { name: "Moskova", country: "Rusya", zone: "Europe/Moscow" },
+        { name: "Pekin", country: "Çin", zone: "Asia/Shanghai" },
+        { name: "Los Angeles", country: "ABD", zone: "America/Los_Angeles" },
+        { name: "Sao Paulo", country: "Brezilya", zone: "America/Sao_Paulo" }
+    ];
+
+    function updateClocks() {
+        const container = document.getElementById('clock-container');
+        const now = new Date();
+
+        container.innerHTML = '';
+
+        cities.forEach(city => {
+            // Şehrin yerel saatini hesapla
+            const formatter = new Intl.DateTimeFormat('tr-TR', {
+                timeZone: city.zone,
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+            });
+
+            const dateLabelFormatter = new Intl.DateTimeFormat('tr-TR', {
+                timeZone: city.zone,
+                day: 'numeric',
+                month: 'short'
+            });
+
+            const parts = formatter.formatToParts(now);
+            const hour = parseInt(parts.find(p => p.type === 'hour').value);
+            const timeString = formatter.format(now);
+            const dateString = dateLabelFormatter.format(now);
+
+            // Gece mi gündüz mü kontrolü (06:00 - 18:00 arası gündüz kabul edilir)
+            const isDay = hour >= 6 && hour < 18;
+            const icon = isDay ? '☀️' : '🌙';
+            const iconClass = isDay ? 'day-mode' : 'night-mode';
+
+            const card = document.createElement('div');
+            card.className = 'clock-card';
+            card.innerHTML = `
+                <div class="status-icon ${iconClass}">${icon}</div>
+                <span class="city-name">${city.name}</span>
+                <span class="country-name">${city.country}</span>
+                <div class="time-display">${timeString}</div>
+                <div class="date-display">${dateString}</div>
+            `;
+            container.appendChild(card);
+        });
+    }
+
+    setInterval(updateClocks, 1000);
+    updateClocks();
+</script>
+
+</body>
+</html>
