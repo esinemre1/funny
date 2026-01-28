@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Warp Runner</title>
+    <style>
+        body { margin: 0; background: #000; overflow: hidden; touch-action: none; color: #fff; font-family: sans-serif; }
+        canvas { display: block; }
+        #score { position: absolute; top: 20px; width: 100%; text-align: center; font-size: 2rem; font-weight: bold; text-shadow: 0 0 10px #70a1ff; }
+    </style>
+</head>
+<body>
+    <div id="score">0</div>
+    <canvas id="warpCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById("warpCanvas");
+        const ctx = canvas.getContext("2d");
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        let playerX = canvas.width / 2;
+        let score = 0;
+        let obstacles = [];
+        let speed = 5;
+
+        window.addEventListener("pointermove", e => {
+            playerX = e.clientX;
+        });
+
+        function createObstacle() {
+            if (Math.random() < 0.05) {
+                obstacles.push({
+                    x: Math.random() * canvas.width,
+                    y: -50,
+                    w: Math.random() * 100 + 50,
+                    h: 20
+                });
+            }
+        }
+
+        function draw() {
+            ctx.fillStyle = "rgba(0, 0, 20, 0.2)"; // Motion blur efekti
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Oyuncu (Warp Gemisi)
+            ctx.fillStyle = "#70a1ff";
+            ctx.shadowBlur = 20; ctx.shadowColor = "#70a1ff";
+            ctx.beginPath();
+            ctx.moveTo(playerX, canvas.height - 80);
+            ctx.lineTo(playerX - 20, canvas.height - 40);
+            ctx.lineTo(playerX + 20, canvas.height - 40);
+            ctx.fill();
+
+            obstacles.forEach((ob, i) => {
+                ob.y += speed;
+                ctx.fillStyle = "#ff4757";
+                ctx.shadowColor = "#ff4757";
+                ctx.fillRect(ob.x, ob.y, ob.w, ob.h);
+
+                // Çarpışma Testi
+                if (ob.y + ob.h > canvas.height - 80 && ob.y < canvas.height - 40 &&
+                    playerX > ob.x && playerX < ob.x + ob.w) {
+                    alert("ÇARPIŞMA! Mesafe: " + score);
+                    location.reload();
+                }
+
+                if (ob.y > canvas.height) {
+                    obstacles.splice(i, 1);
+                    score++;
+                    document.getElementById("score").innerText = score;
+                    speed += 0.05;
+                }
+            });
+
+            createObstacle();
+            requestAnimationFrame(draw);
+        }
+        draw();
+    </script>
+</body>
+</html>
