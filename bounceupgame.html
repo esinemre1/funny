@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Bounce Up</title>
+    <style>
+        body { margin: 0; background: #0f172a; overflow: hidden; touch-action: none; }
+        #ui { position: absolute; top: 10px; width: 100%; text-align: center; color: white; font-family: sans-serif; pointer-events: none; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+    <div id="ui">YÜKSEKLİK: <span id="h">0</span></div>
+    <canvas id="c"></canvas>
+
+    <script>
+        const canvas = document.getElementById("c");
+        const ctx = canvas.getContext("2d");
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        let score = 0;
+        let ball = { x: canvas.width/2, y: canvas.height/2, r: 15, vy: 0 };
+        let paddle = { x: canvas.width/2, w: 100, h: 15 };
+        let gravity = 0.25;
+
+        window.addEventListener("pointermove", e => {
+            paddle.x = e.clientX - paddle.w/2;
+        });
+
+        function animate() {
+            ctx.fillStyle = "#0f172a";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Yerçekimi ve Hareket
+            ball.vy += gravity;
+            ball.y += ball.vy;
+
+            // Palet çarpışma
+            if(ball.y + ball.r > canvas.height - 50 && 
+               ball.x > paddle.x && ball.x < paddle.x + paddle.w && 
+               ball.vy > 0) {
+                ball.vy = -12;
+                score++;
+                document.getElementById("h").innerText = score;
+            }
+
+            // Kenar sekme
+            if(ball.x - ball.r < 0 || ball.x + ball.r > canvas.width) ball.vx *= -1;
+
+            // Kaybetme
+            if(ball.y > canvas.height) {
+                alert("DÜŞTÜN! SKOR: " + score);
+                location.reload();
+            }
+
+            // Çizim
+            ctx.fillStyle = "#22d3ee";
+            ctx.beginPath(); ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI*2); ctx.fill();
+
+            ctx.fillStyle = "#f43f5e";
+            ctx.fillRect(paddle.x, canvas.height - 50, paddle.w, paddle.h);
+
+            requestAnimationFrame(animate);
+        }
+        animate();
+    </script>
+</body>
+</html>
