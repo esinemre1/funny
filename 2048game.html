@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>2048: Industrial Edition</title>
+    <style>
+        :root {
+            --bg-main: #1a1a1a;
+            --grid-bg: #333333;
+            --tile-empty: #444444;
+            --primary-red: #660000;
+            --primary-gray: #999999;
+            --text-light: #eeeeee;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-light);
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+            touch-action: none;
+        }
+
+        .header {
+            width: 340px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .score-container {
+            display: flex;
+            gap: 10px;
+        }
+
+        .score-box {
+            background: var(--grid-bg);
+            padding: 5px 15px;
+            border-radius: 5px;
+            text-align: center;
+            min-width: 60px;
+            border-bottom: 3px solid var(--primary-red);
+        }
+
+        .score-label { font-size: 10px; color: var(--primary-gray); text-transform: uppercase; }
+        .score-value { font-size: 18px; font-weight: bold; }
+
+        #grid-container {
+            width: 340px;
+            height: 340px;
+            background-color: var(--grid-bg);
+            border-radius: 6px;
+            position: relative;
+            padding: 10px;
+            box-sizing: border-box;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        .tile {
+            width: 100%;
+            height: 100%;
+            background-color: var(--tile-empty);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            transition: all 0.1s ease-in-out;
+            color: var(--text-light);
+        }
+
+        /* Sayı Bazlı Renklendirme */
+        .tile-2 { background-color: #555555; color: #999999; }
+        .tile-4 { background-color: #666666; color: #bbbbbb; }
+        .tile-8 { background-color: #880000; color: #ffffff; }
+        .tile-16 { background-color: #aa0000; color: #ffffff; }
+        .tile-32 { background-color: #cc0000; color: #ffffff; }
+        .tile-64 { background-color: #ee0000; color: #ffffff; }
+        .tile-128 { background-color: #660000; box-shadow: inset 0 0 10px #000; }
+        .tile-256 { background-color: #999999; color: #333; }
+        .tile-512 { background-color: #990000; font-size: 20px; }
+        .tile-1024 { background-color: #330000; font-size: 18px; border: 1px solid var(--primary-red); }
+        .tile-2048 { background-color: #000000; color: var(--primary-red); border: 2px solid var(--primary-red); }
+
+        .btn-reset {
+            margin-top: 20px;
+            padding: 10px 25px;
+            background-color: var(--primary-red);
+            border: none;
+            color: white;
+            cursor: pointer;
+            border-radius: 4px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .btn-reset:hover { background-color: #880000; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1 style="margin:0; color: var(--primary-red)">2048</h1>
+        <div class="score-container">
+            <div class="score-box">
+                <div class="score-label">SKOR</div>
+                <div id="score" class="score-value">0</div>
+            </div>
+            <div class="score-box">
+                <div class="score-label">EN İYİ</div>
+                <div id="best" class="score-value">0</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="grid-container"></div>
+
+    <button class="btn-reset" onclick="resetGame()">YENİDEN BAŞLAT</button>
+
+    <script>
+        let grid = [];
+        let score = 0;
+        let best = localStorage.getItem('2048best') || 0;
+        const size = 4;
+        const gridDisplay = document.getElementById('grid-container');
+        const scoreDisplay = document.getElementById('score');
+        const bestDisplay = document.getElementById('best');
+
+        function initGame() {
+            bestDisplay.innerText = best;
+            grid = Array(size * size).fill(0);
+            addTile();
+            addTile();
+            updateDisplay();
+        }
+
+        function addTile() {
+            let emptyTiles = grid.map((val, idx) => val === 0 ? idx : null).filter(val => val !== null);
+            if (emptyTiles.length > 0) {
+                let randomTile = emptyTiles[Math.floor(Math.random() * emptyTiles.length)];
+                grid[randomTile] = Math.random() < 0.9 ? 2 : 4;
+            }
+        }
+
+        function updateDisplay() {
+            gridDisplay.innerHTML = '';
+            grid.forEach(value => {
+                const tile = document.createElement('div');
+                tile.className = 'tile' + (value ? ` tile-${value}` : '');
+                tile.innerText = value || '';
+                gridDisplay.appendChild(tile);
+            });
+            scoreDisplay.innerText = score;
+        }
+
+        function slide(row) {
+            let filteredRow = row.filter(num => num !== 0);
+            for (let i = 0; i < filteredRow.length - 1; i++) {
+                if (filteredRow[i] === filteredRow[i + 1]) {
+                    filteredRow[i] *= 2;
+                    score += filteredRow[i];
+                    filteredRow[i + 1] = 0;
+                }
+            }
+            let newRow = filteredRow.filter(num => num !== 0);
+            while (newRow.length < size) {
+                newRow.push(0);
+            }
+            return newRow;
+        }
+
+        function move(direction) {
+            let oldGrid = [...grid];
+            for (let i = 0; i < size; i++) {
+                let row = [];
+                for (let j = 0; j < size; j++) {
+                    if (direction === 'LEFT' || direction === 'RIGHT') row.push(grid[i * size + j]);
+                    else row.push(grid[j * size + i]);
+                }
+
+                if (direction === 'RIGHT' || direction === 'DOWN') row.reverse();
+                row = slide(row);
+                if (direction === 'RIGHT' || direction === 'DOWN') row.reverse();
+
+                for (let j = 0; j < size; j++) {
+                    if (direction === 'LEFT' || direction === 'RIGHT') grid[i * size + j] = row[j];
+                    else grid[j * size + i] = row[j];
+                }
+            }
+
+            if (JSON.stringify(oldGrid) !== JSON.stringify(grid)) {
+                addTile();
+                if (score > best) {
+                    best = score;
+                    localStorage.setItem('2048best', best);
+                    bestDisplay.innerText = best;
+                }
+                updateDisplay();
+                checkGameOver();
+            }
+        }
+
+        function checkGameOver() {
+            if (!grid.includes(0)) {
+                // Burada hareket edebilir mi kontrolü eklenebilir
+                // Şimdilik basitçe dolunca bitiriyoruz
+            }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') move('LEFT');
+            if (e.key === 'ArrowRight') move('RIGHT');
+            if (e.key === 'ArrowUp') move('UP');
+            if (e.key === 'ArrowDown') move('DOWN');
+        });
+
+        // Mobil Dokunmatik (Swipe) Kontrolü
+        let touchStart = null;
+        document.addEventListener('touchstart', e => touchStart = {x: e.touches[0].clientX, y: e.touches[0].clientY});
+        document.addEventListener('touchend', e => {
+            if (!touchStart) return;
+            let dx = e.changedTouches[0].clientX - touchStart.x;
+            let dy = e.changedTouches[0].clientY - touchStart.y;
+            if (Math.abs(dx) > Math.abs(dy)) {
+                if (Math.abs(dx) > 30) move(dx > 0 ? 'RIGHT' : 'LEFT');
+            } else {
+                if (Math.abs(dy) > 30) move(dy > 0 ? 'DOWN' : 'UP');
+            }
+            touchStart = null;
+        });
+
+        function resetGame() {
+            score = 0;
+            initGame();
+        }
+
+        initGame();
+    </script>
+</body>
+</html>
